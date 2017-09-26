@@ -10,8 +10,17 @@ namespace Internal.Utilities
 
 module System =
 
-    module Decimal =
-        let GetBits(d: decimal): int[] = [| 0; 0; 0; 0 |] //TODO: proper implementation
+    [<Struct>]
+    type ValueTuple<'T1,'T2> =
+        new (v1,v2) = { Item1 = v1; Item2 = v2 }
+        val Item1 : 'T1
+        val Item2 : 'T2
+
+    module DateTime =
+        let Now = System.DateTime.UtcNow //TODO: proper implementation
+
+    // module Decimal =
+    //     let GetBits(d: decimal): int[] = [| 0; 0; 0; 0 |] //TODO: proper implementation
 
     module Diagnostics =
         type Trace() =
@@ -20,6 +29,14 @@ module System =
     module Reflection =
         type AssemblyName(assemblyName: string) =
             member x.Name = assemblyName //TODO: proper implementation
+
+    module Threading =
+        type CancellationToken(canceled: bool) =
+            static member None = CancellationToken(false)
+            member x.IsCancellationRequested = canceled
+
+    type OperationCanceledException(ct: Threading.CancellationToken) =
+        inherit System.Exception()
 
     type WeakReference<'T>(v: 'T) =
         member x.TryGetTarget () = (true, v)
@@ -56,7 +73,7 @@ module System =
             let GetCurrentDirectory () = "." //TODO: proper xplat implementation
 
         module Path =
-            open System.Text.RegularExpressions
+            // open System.Text.RegularExpressions
 
             let Combine (path1: string, path2: string) = //TODO: proper xplat implementation
                 let path1 =
@@ -65,17 +82,25 @@ module System =
                 path1 + (path2.TrimStart [|'\\';'/'|])
 
             let ChangeExtension (path: string, ext: string) =
-                Regex.Replace(path, "\.\w+$", ext)
+                // Regex.Replace(path, "\.\w+$", ext)
+                let i = path.LastIndexOf(".")
+                if i < 0 then path
+                else path.Substring(0, i) + ext
 
             let HasExtension (path: string) =
-                Regex.Match(path, "\.\w+$").Success
+                // Regex.Match(path, "\.\w+$").Success
+                let i = path.LastIndexOf(".")
+                i >= 0
 
             let GetExtension (path: string) =
-                Regex.Match(path, "\.\w+$").Value
+                // Regex.Match(path, "\.\w+$").Value
+                let i = path.LastIndexOf(".")
+                if i < 0 then ""
+                else path.Substring(i)
 
             let GetInvalidPathChars () = //TODO: proper xplat implementation
                 Seq.toArray "<>|\"\b\0\t"
-            
+
             let GetInvalidFileNameChars () = //TODO: proper xplat implementation
                 Seq.toArray "<>|\"\b\0\t"
 
@@ -89,7 +114,10 @@ module System =
 
             let GetFileNameWithoutExtension (path: string) =
                 let filename = GetFileName path
-                Regex.Replace(filename, "\.\w+$", "")
+                // Regex.Replace(filename, "\.\w+$", "")
+                let i = filename.LastIndexOf(".")
+                if i < 0 then filename
+                else filename.Substring(0, i)
 
             let GetDirectoryName (path: string) = //TODO: proper xplat implementation
                 let normPath = path.Replace("\\", "/")
@@ -146,13 +174,22 @@ module System =
     module Text =
 
         type StringBuilder(?s: string) =
-            let buf = ResizeArray<string>()
-            do if Option.isSome s then buf.Add(s.Value)
+            let sb = System.Text.StringBuilder()
+            do if Option.isSome s then sb.Append(s.Value) |> ignore
             new (capacity: int, ?maxCapacity: int) = StringBuilder()
             new (s: string, ?maxCapacity: int) = StringBuilder(s)
-            member x.Append(s: string) = buf.Add(s); x
-            member x.AppendFormat(fmt: string, o: obj) = buf.Add(System.String.Format(fmt, o)); x
-            override x.ToString() = System.String.Concat(buf)
+            member x.Append(s: string) = sb.Append(s) |> ignore; x
+            member x.AppendFormat(fmt: string, o: obj) = sb.AppendFormat(fmt, o) |> ignore; x
+            override x.ToString() = sb.ToString()
+
+        // type StringBuilder(?s: string) =
+        //     let buf = ResizeArray<string>()
+        //     do if Option.isSome s then buf.Add(s.Value)
+        //     new (capacity: int, ?maxCapacity: int) = StringBuilder()
+        //     new (s: string, ?maxCapacity: int) = StringBuilder(s)
+        //     member x.Append(s: string) = buf.Add(s); x
+        //     member x.AppendFormat(fmt: string, o: obj) = buf.Add(System.String.Format(fmt, o)); x
+        //     override x.ToString() = System.String.Concat(buf)
 
         module Encoding =
 
@@ -174,6 +211,7 @@ module System =
                     sb.ToString()
 
             module UTF8 = // TODO: add surrogate pairs
+
                 let GetBytes (s: string) =
                     let buf = ResizeArray<byte>()
                     let encodeUtf8 (c: char) =
@@ -190,31 +228,48 @@ module System =
                     s.ToCharArray() |> Array.map encodeUtf8 |> ignore
                     buf.ToArray()
 
+                let decodeUtf8 (bytes: byte[]) (pos: byref<int>) =
+                    let i1 = int(bytes.[pos])
+                    if i1 &&& 0x80 = 0 then
+                        pos <- pos + 1
+                        (i1 &&& 0x7F)
+                    else if i1 &&& 0xE0 = 0xC0 then
+                        let i2 = int(bytes.[pos + 1]) in
+                        pos <- pos + 2
+                        ((i1 &&& 0x1F) <<< 6) ||| (i2 &&& 0x3F)
+                    else if i1 &&& 0xF0 = 0xE0 then
+                        let i2 = int(bytes.[pos + 1]) in
+                        let i3 = int(bytes.[pos + 2]) in
+                        pos <- pos + 3
+                        ((i1 &&& 0x1F) <<< 12) ||| ((i2 &&& 0x3F) <<< 6) ||| (i3 &&& 0x3F)
+                    else
+                        pos <- pos + 1
+                        0 // invalid decoding
+                        
                 let GetString (bytes: byte[], index: int, count: int) =
-                    let decodeUtf8 pos =
-                        let i1 = int(bytes.[pos])
-                        if i1 &&& 0x80 = 0 then
-                            (i1 &&& 0x7F), 1
-                        else if i1 &&& 0xE0 = 0xC0 then
-                            let i2 = int(bytes.[pos + 1]) in
-                            ((i1 &&& 0x1F) <<< 6) ||| (i2 &&& 0x3F), 2
-                        else if i1 &&& 0xF0 = 0xE0 then
-                            let i2 = int(bytes.[pos + 1]) in
-                            let i3 = int(bytes.[pos + 2]) in
-                            ((i1 &&& 0x1F) <<< 12) ||| ((i2 &&& 0x3F) <<< 6) ||| (i3 &&& 0x3F), 3
-                        else 0, 1 // invalid decoding
-                    let sb = StringBuilder()
+                    //let sb = StringBuilder()
+                    let chars: char array = Array.zeroCreate count
                     let mutable pos = index
+                    let mutable cnt = 0
                     let last = index + count
                     while pos < last do
-                        let d, inc = decodeUtf8 pos
-                        sb.Append(string (char d)) |> ignore
-                        pos <- pos + inc
-                    sb.ToString()
+                        let d = decodeUtf8 bytes &pos
+                        // sb.Append(string (char d)) |> ignore
+                        chars.[cnt] <- char d
+                        // pos <- pos + inc
+                        cnt <- cnt + 1
+                    //sb.ToString()
+                    System.String(chars, 0, cnt)
 
 
 module Microsoft =
     module FSharp =
+        module Control =
+            type Async<'T> = FSharp.Control.Tasks.ContextSensitive.Async<'T>
+            let async = FSharp.Control.Tasks.ContextSensitive.async
+            module Async =
+                let RunSynchronously = FSharp.Control.Tasks.Async.RunSynchronously
+                let Sleep = FSharp.Control.Tasks.Async.Sleep
 
         module Collections =
             open System.Collections.Generic

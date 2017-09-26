@@ -9,6 +9,7 @@ namespace Microsoft.FSharp.Compiler.SourceCodeServices
 
 #if FABLE_COMPILER
 open Internal.Utilities
+open Microsoft.FSharp.Control
 #endif
 open System
 open System.Collections.Generic
@@ -180,14 +181,19 @@ type CompilationGlobalsScope(errorLogger:ErrorLogger, phase: BuildPhase) =
             unwindEL.Dispose()
 
 module ErrorHelpers =                            
-    let ReportError (tcConfig:TcConfig, allErrors, mainInputFileName, fileInfo, (exn, sev)) = 
+    let ReportError (tcConfig:TcConfig, allErrors, mainInputFileName, fileInfo:(int * int), (exn, sev)) = 
         [ let isError = (sev = FSharpErrorSeverity.Error) || ReportWarningAsError (tcConfig.globalWarnLevel, tcConfig.specificWarnOff, tcConfig.specificWarnOn, tcConfig.specificWarnAsError, tcConfig.specificWarnAsWarn, tcConfig.globalWarnAsError) exn                
           if (isError || ReportWarning (tcConfig.globalWarnLevel, tcConfig.specificWarnOff, tcConfig.specificWarnOn) exn) then 
             let oneError trim exn = 
                 [ // We use the first line of the file as a fallbackRange for reporting unexpected errors.
                   // Not ideal, but it's hard to see what else to do.
                   let fallbackRange = rangeN mainInputFileName 1
+#if FABLE_COMPILER
+                  ignore fileInfo
+                  let ei = FSharpErrorInfo.CreateFromException(exn, isError, trim, fallbackRange)
+#else
                   let ei = FSharpErrorInfo.CreateFromExceptionAndAdjustEof (exn, isError, trim, fallbackRange, fileInfo)
+#endif
                   if allErrors || (ei.FileName=mainInputFileName) || (ei.FileName=Microsoft.FSharp.Compiler.TcGlobals.DummyFileNameForRangesWithoutASpecificLocation) then
                       yield ei ]
                       

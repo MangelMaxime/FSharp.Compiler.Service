@@ -13,6 +13,7 @@ open Internal.Utilities
 open Microsoft.FSharp.Collections
 open Microsoft.FSharp.Core
 open Microsoft.FSharp.Core.Operators
+open Microsoft.FSharp.Control
 #endif
 open System
 open System.Collections
@@ -797,11 +798,7 @@ module Cancellable =
     /// Run the computation in a mode where it may not be cancelled. The computation never results in a 
     /// ValueOrCancelled.Cancelled.
     let runWithoutCancellation comp = 
-#if FABLE_COMPILER
-        let res = run (System.Threading.CancellationToken()) comp
-#else
         let res = run System.Threading.CancellationToken.None comp 
-#endif
         match res with 
         | ValueOrCancelled.Cancelled _ -> failwith "unexpected cancellation" 
         | ValueOrCancelled.Value r -> r

@@ -43,7 +43,7 @@ type pos(code:int32) =
     member r.Encoding = code
     static member EncodingSize = posBitCount
     static member Decode (code:int32) : pos = pos code
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
     override p.ToString() = sprintf "(%d,%d)" p.Line p.Column
 #endif
     override p.Equals(obj) = match obj with :? pos as p2 -> code = p2.Encoding | _ -> false
@@ -52,7 +52,7 @@ type pos(code:int32) =
 [<Literal>]
 let fileIndexBitCount = 14
 
-#if !FABLE_COMPILER
+#if !NOT_FABLE_COMPILER
 [<Literal>]
 let startLineBitCount = lineBitCount
 [<Literal>]
@@ -108,14 +108,14 @@ let _ = assert (endColumnMask =   mask64 endColumnShift   endColumnBitCount)
 let _ = assert (isSyntheticMask = mask64 isSyntheticShift isSyntheticBitCount)
 #endif
 
-#endif //!FABLE_COMPILER
+#endif //!NOT_FABLE_COMPILER
 
 // This is just a standard unique-index table
 type FileIndexTable() = 
     let indexToFileTable = new ResizeArray<_>(11)
     let fileToIndexTable = new Dictionary<string,int>(11)
     member t.FileToIndex f = 
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
         (
 #else
         let ok, res = fileToIndexTable.TryGetValue f in
@@ -148,7 +148,7 @@ let fileOfFileIndex n = fileIndexTable.IndexToFile(n)
 
 let mkPos l c = pos (l,c)
 
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
 [<Literal>]
 let fileIndexMask =   0b0011111111111111
 [<Literal>]
@@ -174,7 +174,10 @@ type range(code:int, b:pos, e:pos) =
     member r.ToShortString() = sprintf "(%d,%d--%d,%d)" r.StartLine r.StartColumn r.EndLine r.EndColumn
     member r.Code = code
     override r.Equals(obj) = match obj with :? range as r2 -> r.Code = r2.Code && r.Start = r2.Start && r.End = r2.End | _ -> false
-    override r.GetHashCode() = hash r
+    override r.GetHashCode() = //hash r
+        hash (int64 code
+                ||| (int64 b.Encoding <<< fileIndexBitCount) 
+                ||| (int64 e.Encoding <<< (fileIndexBitCount+lineBitCount+columnBitCount)) )
 
 #else
 [<Struct; CustomEquality; NoComparison>]
@@ -241,7 +244,7 @@ let unionRanges (m1:range) (m2:range) =
     let e = 
       if (m1.EndLine > m2.EndLine || (m1.EndLine = m2.EndLine && m1.EndColumn > m2.EndColumn)) then m1
       else m2
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
     range (m1.FileIndex, b.Start, e.End)
 #else
     range (m1.FileIndex, b.StartLine, b.StartColumn, e.EndLine, e.EndColumn)
@@ -272,7 +275,7 @@ let trimRangeToLine (r:range) =
       r
     else
       let endL,endC = startL+1,0   (* Trim to the start of the next line (we do not know the end of the current line) *)
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
       range (r.FileIndex, pos(startL, startC), pos(endL, endC))
 #else
       range (r.FileIndex, startL, startC, endL, endC)
@@ -296,7 +299,7 @@ type Range01 = Pos01 * Pos01
 module Line =
     // Visual Studio uses line counts starting at 0, F# uses them starting at 1 
     let fromZ (line:Line0) = int line+1
-#if FABLE_COMPILER
+#if NOT_FABLE_COMPILER
     let toZ (line:int) : Line0 = int (line - 1)
 #else
     let toZ (line:int) : Line0 = LanguagePrimitives.Int32WithMeasure(line - 1)

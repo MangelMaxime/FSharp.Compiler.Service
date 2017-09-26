@@ -5,6 +5,7 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard1.6</TargetFramework>
+    <DefineConstants>$(DefineConstants);FX_NO_BIGINT</DefineConstants>
     <DefineConstants>$(DefineConstants);FABLE_COMPILER</DefineConstants>
     <DefineConstants>$(DefineConstants);COMPILER_PUBLIC_API</DefineConstants>
     <DefineConstants>$(DefineConstants);FX_NO_CORHOST_SIGNER</DefineConstants>
@@ -16,12 +17,18 @@
     <DefineConstants>$(DefineConstants);NO_COMPILER_BACKEND</DefineConstants>
     <DefineConstants>$(DefineConstants);NO_INLINE_IL_PARSER</DefineConstants>
     <OtherFlags>$(OtherFlags) --warnon:1182</OtherFlags>
+    <DisableImplicitFSharpCoreReference>true</DisableImplicitFSharpCoreReference>
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TaskBuilder.fs"/>
     <Compile Include="fsstrings.fs"/>
     <Compile Include="unicode.fs"/>
     <Compile Include="adapters.fs"/>
+    <Compile Include="math/n.fsi"/>
+    <Compile Include="math/n.fs"/>
+    <Compile Include="math/z.fsi"/>
+    <Compile Include="math/z.fs"/>
     <Compile Include="codegen/FSComp.fs"/>
     <Compile Include="codegen/FSIstrings.fs"/>
     <!-- <Compile Include="$(FSharpSourcesRoot)/assemblyinfo/assemblyinfo.FSharp.Compiler.Service.dll.fs"/> -->
@@ -202,6 +209,10 @@
     <!-- <Compile Include="$(FSharpSourcesRoot)/fsharp/fsi/fsi.fs"/> -->
     <Compile Include="service_shim.fs"/>
     <Compile Include="ast_print.fs"/>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="/Projects/dotnet-js/src/FSharp.Core/FSharp.Core.fsproj" />
   </ItemGroup>
 
   <ItemGroup>

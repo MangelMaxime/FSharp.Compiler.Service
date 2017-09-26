@@ -7,7 +7,9 @@ namespace Microsoft.FSharp.Compiler.SourceCodeServices
 
 open Internal.Utilities
 open Internal.Utilities.Collections
-
+#if FABLE_COMPILER
+open Microsoft.FSharp.Control
+#endif
 open System
 open System.Collections.Generic
 open System.Collections.Concurrent
@@ -1521,7 +1523,11 @@ module internal Parser =
                     else 
                         let isLastCompiland = 
                             projectSourceFiles.Length >= 1 && 
+#if FABLE_COMPILER
+                            System.String.Compare(projectSourceFiles.[projectSourceFiles.Length-1],mainInputFileName,StringComparison.OrdinalIgnoreCase)=0
+#else
                             System.String.Compare(projectSourceFiles.[projectSourceFiles.Length-1],mainInputFileName,StringComparison.CurrentCultureIgnoreCase)=0
+#endif
                         let isLastCompiland = isLastCompiland || CompileOps.IsScript(mainInputFileName)  
 #if FABLE_COMPILER
                         let isExe = false // true for NodeJS?
