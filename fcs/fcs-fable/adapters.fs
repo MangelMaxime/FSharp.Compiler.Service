@@ -132,44 +132,47 @@ module System =
     module Char =
         open System.Globalization
 
-        let GetUnicodeCategory (c: char): UnicodeCategory = //TODO: proper Unicode implementation
-            LanguagePrimitives.EnumOfValue (int categoryForLatin1.[int c])
-        let IsControl (c: char) =
-            GetUnicodeCategory(c) = UnicodeCategory.Control
-        let IsDigit (c: char) =
-            GetUnicodeCategory(c) = UnicodeCategory.DecimalDigitNumber
-        let IsLetter (c: char) =
-            match GetUnicodeCategory(c) with
-            | UnicodeCategory.UppercaseLetter
-            | UnicodeCategory.LowercaseLetter
-            | UnicodeCategory.TitlecaseLetter
-            | UnicodeCategory.ModifierLetter
-            | UnicodeCategory.OtherLetter -> true
-            | _ -> false
-        let IsLetterOrDigit (c: char) =
-            IsLetter(c) || IsDigit(c)
-        let IsWhiteSpace (c: char) =
-            // There are characters which belong to UnicodeCategory.Control but are considered as white spaces.
-            c = ' ' || (c >= '\x09' && c <= '\x0d') || c = '\xa0' || c = '\x85'
-        let IsUpper (c: char) =
-            GetUnicodeCategory(c) = UnicodeCategory.UppercaseLetter
-        let IsLower (c: char) =
-            GetUnicodeCategory(c) = UnicodeCategory.LowercaseLetter
-        let IsPunctuation (c: char) =
-            match GetUnicodeCategory(c) with
-            | UnicodeCategory.ConnectorPunctuation
-            | UnicodeCategory.DashPunctuation
-            | UnicodeCategory.OpenPunctuation
-            | UnicodeCategory.ClosePunctuation
-            | UnicodeCategory.InitialQuotePunctuation
-            | UnicodeCategory.FinalQuotePunctuation
-            | UnicodeCategory.OtherPunctuation -> true
-            | _ -> false
+        let GetUnicodeCategory (c: char): UnicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c)
         let IsSurrogatePair (s,i) = false //TODO: proper Unicode implementation
-        let ToUpper (c: char) = if IsLower(c) then char(int('A') + (int(c) - int('a'))) else c
-        let ToLower (c: char) = if IsUpper(c) then char(int('a') + (int(c) - int('A'))) else c
-        let ToUpperInvariant (c: char) = ToUpper(c)
-        let ToLowerInvariant (c: char) = ToLower(c)
+
+        // let GetUnicodeCategory (c: char): UnicodeCategory = //TODO: proper Unicode implementation
+        //     LanguagePrimitives.EnumOfValue (int categoryForLatin1.[int c])
+        // let IsControl (c: char) =
+        //     GetUnicodeCategory(c) = UnicodeCategory.Control
+        // let IsDigit (c: char) =
+        //     GetUnicodeCategory(c) = UnicodeCategory.DecimalDigitNumber
+        // let IsLetter (c: char) =
+        //     match GetUnicodeCategory(c) with
+        //     | UnicodeCategory.UppercaseLetter
+        //     | UnicodeCategory.LowercaseLetter
+        //     | UnicodeCategory.TitlecaseLetter
+        //     | UnicodeCategory.ModifierLetter
+        //     | UnicodeCategory.OtherLetter -> true
+        //     | _ -> false
+        // let IsLetterOrDigit (c: char) =
+        //     IsLetter(c) || IsDigit(c)
+        // let IsWhiteSpace (c: char) =
+        //     // There are characters which belong to UnicodeCategory.Control but are considered as white spaces.
+        //     c = ' ' || (c >= '\x09' && c <= '\x0d') || c = '\xa0' || c = '\x85'
+        // let IsUpper (c: char) =
+        //     GetUnicodeCategory(c) = UnicodeCategory.UppercaseLetter
+        // let IsLower (c: char) =
+        //     GetUnicodeCategory(c) = UnicodeCategory.LowercaseLetter
+        // let IsPunctuation (c: char) =
+        //     match GetUnicodeCategory(c) with
+        //     | UnicodeCategory.ConnectorPunctuation
+        //     | UnicodeCategory.DashPunctuation
+        //     | UnicodeCategory.OpenPunctuation
+        //     | UnicodeCategory.ClosePunctuation
+        //     | UnicodeCategory.InitialQuotePunctuation
+        //     | UnicodeCategory.FinalQuotePunctuation
+        //     | UnicodeCategory.OtherPunctuation -> true
+        //     | _ -> false
+        // let IsSurrogatePair (s,i) = false //TODO: proper Unicode implementation
+        // let ToUpper (c: char) = if IsLower(c) then char(int('A') + (int(c) - int('a'))) else c
+        // let ToLower (c: char) = if IsUpper(c) then char(int('a') + (int(c) - int('A'))) else c
+        // let ToUpperInvariant (c: char) = ToUpper(c)
+        // let ToLowerInvariant (c: char) = ToLower(c)
 
     module Text =
 
