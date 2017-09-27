@@ -382,12 +382,15 @@ module ErrorLoggerExtensions =
     type ErrorLogger with  
 
         member x.ErrorR  exn = 
-#if !FABLE_COMPILER
+//#if !FABLE_COMPILER
             match exn with 
-            | InternalError (s,_) 
-            | Failure s  as exn -> System.Diagnostics.Debug.Assert(false,sprintf "Unexpected exception raised in compiler: %s\n%s" s (exn.ToString()))
+            | InternalError (s,_)
+            | Failure s  as exn ->
+                System.Console.WriteLine("Unexpected exception raised in compiler: {0}", s)
+                System.Diagnostics.Debugger.Break()
+                //System.Diagnostics.Debug.Assert(false,sprintf "Unexpected exception raised in compiler: %s\n%s" s (exn.ToString()))
             | _ -> ()
-#endif
+//#endif
             match exn with 
             | StopProcessing 
             | ReportedError _ -> 
