@@ -165,6 +165,15 @@ Target "PublishNuGet" (fun _ ->
             WorkingDir = releaseDir })
 )
 
+
+// --------------------------------------------------------------------------------------
+// Export Metadata binaries
+
+Target "Export.Metadata" (fun _ ->
+    runCmdIn (__SOURCE_DIRECTORY__ + "/fcs-export") "dotnet" "run -c Release"
+)
+
+
 // --------------------------------------------------------------------------------------
 // Run all targets by default. Invoke 'build <Target>' to override
 

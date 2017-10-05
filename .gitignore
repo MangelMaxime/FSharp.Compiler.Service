@@ -221,3 +221,7 @@ tests/fsharpqa/testenv/bin/System.ValueTuple.dll
 lib/netcore/fsc/bin/
 
 !lib/bootstrap/signed/**/*
+
+fcs/.paket/paket.exe
+fcs/FSharp.Compiler.Service.netstandard/*.fs
+fcs/FSharp.Compiler.Service.netstandard/*.fsi
