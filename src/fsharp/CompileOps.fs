@@ -4774,7 +4774,7 @@ type TcImports(tcConfigP:TcConfigProvider, initialResolutions:TcAssemblyResoluti
         frameworkTcImports.SetTcGlobals(tcGlobals)
 
 #if EXPORT_METADATA
-        let metadataPath = "/temp/metadata2/"
+        let metadataPath = __SOURCE_DIRECTORY__ + "/../../temp/metadata2/"
         let writeMetadata (dllInfo: ImportedBinary) =
             let outfile = Path.GetFullPath(metadataPath + Path.GetFileName(dllInfo.FileName))
             let ilModule = dllInfo.RawMetadata.TryGetRawILModule().Value
