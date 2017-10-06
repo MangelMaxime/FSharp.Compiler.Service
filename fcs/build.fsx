@@ -40,6 +40,12 @@ let runCmdIn workDir (exe:string) = Printf.ksprintf (fun (args:string) ->
 let releaseDir = Path.Combine(__SOURCE_DIRECTORY__, "../Release")
 
 
+
+let mutable dotnetExePath = "dotnet"
+let runDotnet dir =
+    DotNetCli.RunCommand (fun p -> { p with ToolPath = dotnetExePath
+                                            WorkingDir = dir } )
+
 // Read release notes & version info from RELEASE_NOTES.md
 let release = LoadReleaseNotes (__SOURCE_DIRECTORY__ + "/RELEASE_NOTES.md")
 let isAppVeyorBuild = buildServer = BuildServer.AppVeyor
@@ -170,7 +176,7 @@ Target "PublishNuGet" (fun _ ->
 // Export Metadata binaries
 
 Target "Export.Metadata" (fun _ ->
-    runCmdIn (__SOURCE_DIRECTORY__ + "/fcs-export") "dotnet" "run -c Release"
+    runDotnet (__SOURCE_DIRECTORY__ + "/fcs-export") "run -c Release"
 )
 
 
