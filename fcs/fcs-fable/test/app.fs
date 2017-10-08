@@ -13,6 +13,7 @@ let main argv =
     let references = [
         "Fable.Core"
         "FSharp.Core"
+        "FSharp.Import.Browser"
         "Microsoft.CSharp"
         "Microsoft.VisualBasic"
         "Microsoft.Win32.Primitives"
