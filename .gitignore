@@ -227,3 +227,7 @@ lib/netcore/fsc/bin/
 /fcs/TestResult.xml
 /tests/fcs/
 /fcs/.paket/Paket.Restore.targets
+
+fcs/.paket/paket.exe
+fcs/FSharp.Compiler.Service.netstandard/*.fs
+fcs/FSharp.Compiler.Service.netstandard/*.fsi
